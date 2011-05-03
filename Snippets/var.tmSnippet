@@ -3,14 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>console.log($1);$2</string>
+	<string>var ${1:myVar} = ${2:myVal};${3}</string>
 	<key>name</key>
-	<string>log</string>
+	<string>var</string>
 	<key>scope</key>
 	<string>source.js.node</string>
 	<key>tabTrigger</key>
-	<string>log</string>
+	<string>v</string>
 	<key>uuid</key>
-	<string>18334379-F9D2-41A1-BDD5-9CE16EB3FA9A</string>
+	<string>71BC243C-F63A-4282-9657-8218EBF87026</string>
 </dict>
 </plist>
