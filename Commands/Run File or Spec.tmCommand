@@ -58,7 +58,7 @@ if(process.env.TM_FILENAME.match(/(.*)spec\.js/)) {
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>
-	<string>@r</string>
+	<string>^~@r</string>
 	<key>name</key>
 	<string>Run File or Spec</string>
 	<key>output</key>
