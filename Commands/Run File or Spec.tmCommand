@@ -48,10 +48,10 @@ if(process.env.TM_FILENAME.match(/(.*)spec\.js/)) {
   var spawn = require('child_process').spawn;
   var script = spawn("node", [process.env.TM_FILEPATH]); 
   script.stdout.on("data", function(data) {
-    if (data !== null) { sys.puts("&lt;div&gt;" + data + "&lt;/div&gt;"); }
+    if (data !== null) { sys.puts(data); }
   });
   script.stderr.on("data", function(data) {
-    if (data !== null) { sys.puts("&lt;div&gt;ERROR: " + data + "&lt;/div&gt;"); }
+    if (data !== null) { sys.puts("ERROR: " + data); }
   });
 }
 </string>
@@ -62,7 +62,7 @@ if(process.env.TM_FILENAME.match(/(.*)spec\.js/)) {
 	<key>name</key>
 	<string>Run File or Spec</string>
 	<key>output</key>
-	<string>showAsHTML</string>
+	<string>showAsTooltip</string>
 	<key>scope</key>
 	<string>source.js.node</string>
 	<key>uuid</key>
