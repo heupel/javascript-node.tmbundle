@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>saveActiveFile</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+  
+  # core code
+	require ENV["TM_SUPPORT_PATH"] + "/lib/tm/executor"
+	require ENV["TM_SUPPORT_PATH"] + "/lib/tm/save_current_document"
+
+	TextMate.save_current_document
+	TextMate::Executor.make_project_master_current_document
+
+	error_fd = nil
+	document = File.read(ENV["TM_FILEPATH"])
+
+	TextMate::Executor.run("node", ENV["TM_FILEPATH"]) do |str, type|
+	  error_fd ||= IO.for_fd(ENV["TM_ERROR_FD"].to_i)
+	  case type
+	  when :err
+	  	# if str =~ /^([^\:]+):(\d+):(\d+): (.*?): (.*) \((-?\d+)\)$/ then
+		  err_details = /^([^\:]+): (\w+.*)$/           # the actual error line (TypeError: Unknown method)
+		  err_filedetails = /\(([^\:]+):(\d+):(\d+)\)/ # specific file, line, column
+	  
+	    error_fd &lt;&lt; "&lt;div id=\"exception_report\" class=\"framed\"&gt;\n" if str =~ err_details || str =~ err_filedetails
+	  
+		  case str
+		    when err_details
+		      err, msg = $1, $2
+	        # err = err.gsub(/\b\w(?=\w{3,})/) { |m| m.upcase }
+					error_fd &lt;&lt; "&lt;p id=\"exception\"&gt;&lt;strong&gt;#{htmlize err}&lt;/strong&gt;: #{htmlize msg}&lt;/p&gt;\n"
+				
+		    when err_filedetails
+		  # filepath, start, stop, err, msg, status = $1, $2.to_i, $3.to_i, $4, $5, $6
+		    filepath, line, column = $1, $2.to_i, $3.to_i
+              src = '' # fix this soon
+		    link = "txmt://open?url=file://#{filepath}&amp;line=#{line}&amp;column=#{column}"
+		    error_fd &lt;&lt; "&lt;pre&gt;#{src}\n"
+		    error_fd &lt;&lt; "#{' ' * (column)}↑&lt;/pre&gt;"
+		    error_fd &lt;&lt;  "&lt;blockquote&gt;&lt;a href=\"#{link}\"&gt;line #{line}, column #{column}&lt;/a&gt; in #{filepath}\n"
+
+		    #error_fd &lt;&lt; "&lt;p&gt;Error #{status}.&lt;/p&gt;\n"
+		    else
+		    "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;"
+		  end
+	
+		  if str =~ err_details || str =~ err_filedetails then
+		    error_fd &lt;&lt; "&lt;/div&gt;\n"
+
+		    error_fd.flush
+		    ""
+		  end
+
+	  when :out
+	    htmlize(str)
+	  end
+	end</string>
+	<key>input</key>
+	<string>document</string>
+	<key>keyEquivalent</key>
+	<string>@r</string>
+	<key>name</key>
+	<string>Run File</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>scope</key>
+	<string>source.js.node</string>
+	<key>uuid</key>
+	<string>8DA738DD-64AE-46B0-BACB-FA5FBDBE6612</string>
+</dict>
+</plist>
