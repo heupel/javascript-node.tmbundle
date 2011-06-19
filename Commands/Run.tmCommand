@@ -41,7 +41,11 @@
 
         error_fd &lt;&lt; "&lt;br/&gt;#{htmlize(at_call)}"
         error_fd &lt;&lt; "&lt;pre&gt;#{src}\n#{' ' * (column-1)}↑&lt;/pre&gt;" if src
-        error_fd &lt;&lt;  "&lt;blockquote&gt;&lt;a href=\"#{link}\"&gt;line #{line}, column #{column}&lt;/a&gt; in #{filepath}\n"
+        error_fd &lt;&lt;  "&lt;blockquote&gt;"
+        error_fd &lt;&lt; "&lt;a href=\"#{link}\"&gt;" if link
+        error_fd &lt;&lt; "line #{line}, column #{column}"
+        error_fd &lt;&lt; "&lt;/a&gt;" if link
+        error_fd &lt;&lt; " in #{filepath}\n"
 		    else
         "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;"
 		  end
