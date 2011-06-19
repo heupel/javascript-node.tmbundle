@@ -18,38 +18,37 @@
 	  error_fd ||= IO.for_fd(ENV["TM_ERROR_FD"].to_i)
 	  case type
 	  when :err
-	  	# if str =~ /^([^\:]+):(\d+):(\d+): (.*?): (.*) \((-?\d+)\)$/ then
 		  err_details = /^([^\:]+): (\w+.*)$/           # the actual error line (TypeError: Unknown method)
 		  err_filedetails = /^\s+([^\(]+)\s\(([^\:]+):(\d+):(\d+)\)/ # specific file, line, column
 
-	    error_fd &lt;&lt; "&lt;div id=\"exception_report\" class=\"framed\"&gt;\n" if str =~ err_details || str =~ err_filedetails
+      is_known_error = (str =~ err_details || str =~ err_filedetails)
+      error_fd << "<div id=\"exception_report\" class=\"framed\">\n" if is_known_error
 
 		  case str
-		    when err_details
-		      err, msg = $1, $2
-	        # err = err.gsub(/\b\w(?=\w{3,})/) { |m| m.upcase }
-					error_fd &lt;&lt; "&lt;p id=\"exception\"&gt;&lt;strong&gt;#{htmlize err}&lt;/strong&gt;: #{htmlize msg}&lt;/p&gt;\n"
+		  when err_details
+		    err, msg = $1, $2
+        error_fd << "<p id=\"exception\"><strong>#{htmlize err}</strong>: #{htmlize msg}</p>\n"
 				
-		    when err_filedetails
-		  # filepath, start, stop, err, msg, status = $1, $2.to_i, $3.to_i, $4, $5, $6
+		  when err_filedetails
 		    at_call, filepath, line, column = $1, $2, $3.to_i, $4.to_i
-			src = nil
-              if File.readable?(filepath)
-			  document = File.readlines(filepath)
-                src = htmlize(document[line-1].chomp)
-              end
-		    link = "txmt://open?url=file://#{filepath}&amp;line=#{line}&amp;column=#{column}"
-             error_fd &lt;&lt; "&lt;br/&gt;#{htmlize(at_call)}"
-             error_fd &lt;&lt; "&lt;pre&gt;#{src}\n#{' ' * (column-1)}↑&lt;/pre&gt;" if src
-		    error_fd &lt;&lt;  "&lt;blockquote&gt;&lt;a href=\"#{link}\"&gt;line #{line}, column #{column}&lt;/a&gt; in #{filepath}\n"
+        src = link = nil
+
+        if File.readable?(filepath)
+			    document = File.readlines(filepath)
+          src = htmlize(document[line-1].chomp)
+          link = "txmt://open?url=file://#{filepath}&line=#{line}&column=#{column}"
+        end
+
+        error_fd << "<br/>#{htmlize(at_call)}"
+        error_fd << "<pre>#{src}\n#{' ' * (column-1)}↑</pre>" if src
+        error_fd <<  "<blockquote><a href=\"#{link}\">line #{line}, column #{column}</a> in #{filepath}\n"
 		    else
-		    "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;"
+        "<div class=\"err\" style=\"color:red;\">#{htmlize(str)}</div>"
 		  end
 	
-		  if str =~ err_details || str =~ err_filedetails then
-		    error_fd &lt;&lt; "&lt;/div&gt;\n"
-
-		    error_fd.flush
+		  if is_known_error then
+        error_fd << "</div>\n"
+        error_fd.flush
 		    ""
 		  end
 
