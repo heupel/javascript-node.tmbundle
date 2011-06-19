@@ -22,12 +22,12 @@
 		  err_filedetails = /^\s+([^\(]+)\s\(([^\:]+):(\d+):(\d+)\)/ # specific file, line, column
 
       is_known_error = (str =~ err_details || str =~ err_filedetails)
-      error_fd << "<div id=\"exception_report\" class=\"framed\">\n" if is_known_error
+      error_fd &lt;&lt; "&lt;div id=\"exception_report\" class=\"framed\"&gt;\n" if is_known_error
 
 		  case str
 		  when err_details
 		    err, msg = $1, $2
-        error_fd << "<p id=\"exception\"><strong>#{htmlize err}</strong>: #{htmlize msg}</p>\n"
+        error_fd &lt;&lt; "&lt;p id=\"exception\"&gt;&lt;strong&gt;#{htmlize err}&lt;/strong&gt;: #{htmlize msg}&lt;/p&gt;\n"
 				
 		  when err_filedetails
 		    at_call, filepath, line, column = $1, $2, $3.to_i, $4.to_i
@@ -36,18 +36,18 @@
         if File.readable?(filepath)
 			    document = File.readlines(filepath)
           src = htmlize(document[line-1].chomp)
-          link = "txmt://open?url=file://#{filepath}&line=#{line}&column=#{column}"
+          link = "txmt://open?url=file://#{filepath}&amp;line=#{line}&amp;column=#{column}"
         end
 
-        error_fd << "<br/>#{htmlize(at_call)}"
-        error_fd << "<pre>#{src}\n#{' ' * (column-1)}↑</pre>" if src
-        error_fd <<  "<blockquote><a href=\"#{link}\">line #{line}, column #{column}</a> in #{filepath}\n"
+        error_fd &lt;&lt; "&lt;br/&gt;#{htmlize(at_call)}"
+        error_fd &lt;&lt; "&lt;pre&gt;#{src}\n#{' ' * (column-1)}↑&lt;/pre&gt;" if src
+        error_fd &lt;&lt;  "&lt;blockquote&gt;&lt;a href=\"#{link}\"&gt;line #{line}, column #{column}&lt;/a&gt; in #{filepath}\n"
 		    else
-        "<div class=\"err\" style=\"color:red;\">#{htmlize(str)}</div>"
+        "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;"
 		  end
 	
 		  if is_known_error then
-        error_fd << "</div>\n"
+        error_fd &lt;&lt; "&lt;/div&gt;\n"
         error_fd.flush
 		    ""
 		  end
@@ -67,6 +67,6 @@
 	<key>scope</key>
 	<string>source.js.node</string>
 	<key>uuid</key>
-	<string>972A0CCA-04E2-4DD7-B815-6499FD3C080D</string>
+	<string>6048F8AB-4457-4A5D-A48A-B9E8378471E8</string>
 </dict>
 </plist>
