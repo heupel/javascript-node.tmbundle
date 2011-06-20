@@ -1,4 +1,4 @@
-# Textmate Bundle for Node.JS
+# TextMate Bundle for Node.JS
 
 ## Common commands and short-cuts
 
@@ -39,13 +39,15 @@ Alternately, in TextMate, from your drop down menu, select Bundles -> Bundle Edi
 
 ## Credits
 
-The Node.JS TM Bundle is currently authored by Dr Nic Williams. Contributors and co-maintainers are welcome.
+The Node.JS TM Bundle was originally authored by Dr Nic Williams. Contributors and co-maintainers are welcome.
 
-* **Dr Nic** - Author/Main contributor
+* **Dr Nic**      - Author/Main contributor
+* **Al Altken**   - Updated when createChildProcess was deprecated in favor of spawn
+* **Tony Heupel** - Created new Run command that looks like the Ruby run window with nicely formatted output and excexeptions, including code output and links directly to the offending line and position. 
 
 ## License
 
-Copyright (c) 2009-2010 Dr Nic Williams, Mocra
+Copyright (c) 2009-2011 Dr Nic Williams, Mocra, Tony Heupel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
