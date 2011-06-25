@@ -7,59 +7,95 @@
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
 
-	require ENV["TM_SUPPORT_PATH"] + "/lib/tm/executor"
-	require ENV["TM_SUPPORT_PATH"] + "/lib/tm/save_current_document"
+require ENV["TM_SUPPORT_PATH"] + "/lib/tm/executor"
+require ENV["TM_SUPPORT_PATH"] + "/lib/tm/save_current_document"
 
-	TextMate.save_current_document
-	TextMate::Executor.make_project_master_current_document
+TextMate.save_current_document
+TextMate::Executor.make_project_master_current_document
 
-	error_fd = nil
-	TextMate::Executor.run("node", ENV["TM_FILEPATH"]) do |str, type|
-	  error_fd ||= IO.for_fd(ENV["TM_ERROR_FD"].to_i)
-	  case type
-	  when :err
-		  err_details = /^([^\:]+): (\w+.*)$/           # the actual error line (TypeError: Unknown method)
-		  err_filedetails = /^\s+([^\(]+)\s\(([^\:]+):(\d+):(\d+)\)/ # specific file, line, column
+def link_url(filepath, line, column)
+  "txmt://open?url=file://#{filepath}&amp;line=#{line}&amp;column=#{column}"
+end
 
-      is_known_error = (str =~ err_details || str =~ err_filedetails)
-      error_fd &lt;&lt; "&lt;div id=\"exception_report\" class=\"framed\"&gt;\n" if is_known_error
+def debug_details(filepath, line, column, at_call, link=nil, src=nil)
+  details = []
+  details &lt;&lt; "&lt;br/&gt;#{htmlize(at_call)}" if at_call
+  details &lt;&lt; "&lt;pre&gt;#{src.chomp}&lt;br/&gt;#{' ' * (column-1)}↑&lt;/pre&gt;" if src
+  details &lt;&lt;  "&lt;blockquote&gt;"
+  details &lt;&lt; "&lt;a href=\"#{link}\"&gt;" if link
+  details &lt;&lt; "line #{line}, column #{column}"
+  details &lt;&lt; "&lt;/a&gt;" if link
+  details &lt;&lt; " in #{filepath}\n"
+  details &lt;&lt; "&lt;/blockquote&gt;"
+end
 
-		  case str
-		  when err_details
-		    err, msg = $1, $2
+multi_line_details = {}
+in_multi_line = false
+
+TextMate::Executor.run("node", ENV["TM_FILEPATH"]) do |str, type|
+  error_fd ||= IO.for_fd(ENV["TM_ERROR_FD"].to_i)
+
+  case type
+  when :err
+    err_multi_line = /^([^\:]+):(\d+)$/
+    err_details = /^([^\:]+): (\w+.*)$/           # the actual error line (TypeError: Unknown method)
+    err_filedetails = /^\s+([^\(]+)\s\(([^\:]+):(\d+):(\d+)\)/ # specific file, line, column
+        
+    if in_multi_line
+      if str =~ /^(\s+)\^$/
+        multi_line_details[:column] = ($1.length + 1)
+        # in multi-line, but on last line, so grab the important details and output the debug info
+        filepath = multi_line_details[:filepath]
+        at_call = multi_line_details[:at_call]
+        line = multi_line_details[:line]
+        column = multi_line_details[:column]
+        link = link_url(filepath, line, column) if File.readable?(filepath)
+        src = multi_line_details[:src]
+        
+        error_fd &lt;&lt; debug_details(filepath, line, column, at_call, link, src)
+        
+        in_multi_line = false
+      else
+        # in multi-line but not on last line, so this is the source code
+        multi_line_details[:src] = str
+      end
+      
+    else
+      # not in multi-line
+      case str
+      when err_multi_line
+        # just found a multi-line error; grab the filename and line number
+        in_multi_line = true
+        multi_line_details[:filepath] = $1
+        multi_line_details[:line] = $2.to_i
+
+      when err_details
+        err, msg = $1, $2
         error_fd &lt;&lt; "&lt;p id=\"exception\"&gt;&lt;strong&gt;#{htmlize err}&lt;/strong&gt;: #{htmlize msg}&lt;/p&gt;\n"
-				
-		  when err_filedetails
-		    at_call, filepath, line, column = $1, $2, $3.to_i, $4.to_i
+
+      when err_filedetails
+        at_call, filepath, line, column = $1, $2, $3.to_i, $4.to_i
         src = link = nil
 
         if File.readable?(filepath)
-			    document = File.readlines(filepath)
+      	  document = File.readlines(filepath)
           src = htmlize(document[line-1].chomp)
-          link = "txmt://open?url=file://#{filepath}&amp;line=#{line}&amp;column=#{column}"
+          link = link_url(filepath, line, column)
         end
 
-        error_fd &lt;&lt; "&lt;br/&gt;#{htmlize(at_call)}"
-        error_fd &lt;&lt; "&lt;pre&gt;#{src}\n#{' ' * (column-1)}↑&lt;/pre&gt;" if src
-        error_fd &lt;&lt;  "&lt;blockquote&gt;"
-        error_fd &lt;&lt; "&lt;a href=\"#{link}\"&gt;" if link
-        error_fd &lt;&lt; "line #{line}, column #{column}"
-        error_fd &lt;&lt; "&lt;/a&gt;" if link
-        error_fd &lt;&lt; " in #{filepath}\n"
-		    else
-        "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;"
-		  end
-	
-		  if is_known_error then
-        error_fd &lt;&lt; "&lt;/div&gt;\n"
-        error_fd.flush
-		    ""
-		  end
+        error_fd &lt;&lt; debug_details(filepath, line, column, at_call, link, src)
+      end
+    end
+    
+    error_fd.flush
+    
+    "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;" # output every line, even if known, so Copy Output works nicely
 
-	  when :out
-	    htmlize(str)
-	  end
-	end</string>
+  when :out
+    htmlize(str)
+  end
+  
+end</string>
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>
