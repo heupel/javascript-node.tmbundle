@@ -29,6 +29,17 @@ def debug_details(filepath, line, column, at_call, link=nil, src=nil)
   details &lt;&lt; "&lt;/blockquote&gt;"
 end
 
+def known_error
+  yield
+  ""
+end
+
+def flush_known_error(error_fd)
+  yield
+  error_fd.flush
+  ""
+end
+
 multi_line_details = {}
 in_multi_line = false
 
@@ -43,21 +54,25 @@ TextMate::Executor.run("node", ENV["TM_FILEPATH"]) do |str, type|
         
     if in_multi_line
       if str =~ /^(\s+)\^$/
-        multi_line_details[:column] = ($1.length + 1)
-        # in multi-line, but on last line, so grab the important details and output the debug info
-        filepath = multi_line_details[:filepath]
-        at_call = multi_line_details[:at_call]
-        line = multi_line_details[:line]
-        column = multi_line_details[:column]
-        link = link_url(filepath, line, column) if File.readable?(filepath)
-        src = multi_line_details[:src]
+        flush_known_error(error_fd) do
+          multi_line_details[:column] = ($1.length + 1)
+          # in multi-line, but on last line, so grab the important details and output the debug info
+          filepath = multi_line_details[:filepath]
+          at_call = multi_line_details[:at_call]
+          line = multi_line_details[:line]
+          column = multi_line_details[:column]
+          link = link_url(filepath, line, column) if File.readable?(filepath)
+          src = multi_line_details[:src]
         
-        error_fd &lt;&lt; debug_details(filepath, line, column, at_call, link, src)
+          error_fd &lt;&lt; debug_details(filepath, line, column, at_call, link, src)
         
-        in_multi_line = false
+          in_multi_line = false
+        end
+        
       else
         # in multi-line but not on last line, so this is the source code
-        multi_line_details[:src] = str
+        known_error { multi_line_details[:src] = str }
+        
       end
       
     else
@@ -65,31 +80,37 @@ TextMate::Executor.run("node", ENV["TM_FILEPATH"]) do |str, type|
       case str
       when err_multi_line
         # just found a multi-line error; grab the filename and line number
-        in_multi_line = true
-        multi_line_details[:filepath] = $1
-        multi_line_details[:line] = $2.to_i
-
-      when err_details
-        err, msg = $1, $2
-        error_fd &lt;&lt; "&lt;p id=\"exception\"&gt;&lt;strong&gt;#{htmlize err}&lt;/strong&gt;: #{htmlize msg}&lt;/p&gt;\n"
-
-      when err_filedetails
-        at_call, filepath, line, column = $1, $2, $3.to_i, $4.to_i
-        src = link = nil
-
-        if File.readable?(filepath)
-      	  document = File.readlines(filepath)
-          src = htmlize(document[line-1].chomp)
-          link = link_url(filepath, line, column)
+        known_error do
+          in_multi_line = true
+          multi_line_details[:filepath] = $1
+          multi_line_details[:line] = $2.to_i
         end
 
-        error_fd &lt;&lt; debug_details(filepath, line, column, at_call, link, src)
+      when err_details
+        flush_known_error(error_fd) do 
+          err, msg = $1, $2
+          error_fd &lt;&lt; "&lt;p id=\"exception\"&gt;&lt;strong&gt;#{htmlize err}&lt;/strong&gt;: #{htmlize msg}&lt;/p&gt;&lt;br/&gt;"
+        end
+        
+      when err_filedetails
+        flush_known_error(error_fd) do
+          at_call, filepath, line, column = $1, $2, $3.to_i, $4.to_i
+          src = link = nil
+
+          if File.readable?(filepath)
+      	    document = File.readlines(filepath)
+            src = htmlize(document[line-1].chomp)
+            link = link_url(filepath, line, column)
+          end
+
+          error_fd &lt;&lt; debug_details(filepath, line, column, at_call, link, src)
+        end
+        
+      else
+        # unknown error format, so just send it to the output window
+        "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str.chomp)}&lt;/div&gt;" # output every line, even if known, so Copy Output works nicely    
       end
     end
-    
-    error_fd.flush
-    
-    "&lt;div class=\"err\" style=\"color:red;\"&gt;#{htmlize(str)}&lt;/div&gt;" # output every line, even if known, so Copy Output works nicely
 
   when :out
     htmlize(str)
