@@ -2,7 +2,7 @@
 
 ## Common commands and short-cuts
 
-Important: Change your current grammar to "JavaScript Node" (short cut: Shift+Ctrl+Alt+N)
+Important: Change your current grammar to "JavaScript Node" (short cut: Shift+Ctrl+Option+N)
 
 * Cmd+R - run current file with node
 * Ctrl+Option+Cmd+R - run current file with node or as a spec and get
@@ -14,7 +14,7 @@ Important: Change your current grammar to "JavaScript Node" (short cut: Shift+Ct
   * .lis - .addListener(...)
   * .cb - .addCallback(...)
   * .errb - .addErrback(...)
-  * .canb - .addCancalback(...)
+  * .canb - .addCancelback(...)
 * sys module:
   * puts - sys.puts('string');
   * p - sys.p('string');
