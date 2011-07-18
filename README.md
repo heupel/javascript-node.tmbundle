@@ -32,7 +32,7 @@ Others:
 
     mkdir -p ~/Library/Application\ Support/TextMate/Bundles/
     cd ~/Library/Application\ Support/TextMate/Bundles
-    git clone git://github.com/InfoSpace/javascript-node.tmbundle.git "JavaScript Node.tmbundle"
+    git clone git://github.com/infospace/javascript-node.tmbundle.git "JavaScript Node.tmbundle"
     osascript -e 'tell app "TextMate" to reload bundles'
 
 Alternately, in TextMate, from your drop down menu, select Bundles -> Bundle Editor -> Reload Bundles.
